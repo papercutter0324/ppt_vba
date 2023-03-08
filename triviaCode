@@ -1,43 +1,28 @@
 Option Explicit
 
+' Variables to store the slide numbers of the first and last slides of each section
 Dim easyBegin As Integer, easyEnd As Integer, mediumBegin As Integer, mediumEnd As Integer, hardBegin As Integer, hardEnd As Integer, lotteryBegin As Integer, lotteryEnd As Integer
+' Variables to store the slide numbers of the award-points slides for both teams
 Dim birdsOne As Integer, birdsTwo As Integer, birdsThree As Integer, pigsOne As Integer, pigsTwo As Integer, pigsThree As Integer
-Dim gameboard As Integer, lottery As Integer, chosenSlide As Integer
-Dim chosenShape As String
+' Variables to store the slide numbers of key slides
+Dim gameboard As Integer, lottery As Integer
+' Variables to handle transitions and animations
+Dim chosenSlide As Integer, chosenShape As String, chosenLottery As String
 
-Dim slideNumbers() As Long
-Dim lotteryNumbers() As Long
-Dim alreadyShownTrivia() As Boolean
-Dim alreadyShownLottery() As Boolean
-
-Private Sub GetCurrentSlideID()
-    Dim currentSlideID As String
-    currentSlideID = ActiveWindow.View.Slide.SlideID
-    MsgBox "The ID of the current slide is: " & currentSlideID
-End Sub
-
-Sub GetTextboxWidth()
-Dim shp As Shape
-Set shp = ActiveWindow.Selection.ShapeRange(1)
-
-If shp.Type = msoTextBox Then
-    Debug.Print shp.Width
-    Debug.Print shp.Height
-End If
-End Sub
+Dim alreadyShownSlides() As Boolean
 
 Sub StartGame()
-    'Set the current slide numbers for the gameboard and points slides
+    ' Set the current slide numbers for the gameboard and points slides
     FindGameboardAndPointsSlides
     
-    'Go through all slides and delete any QuestionID textboxes remaining from previous games
-    DeleteQuestionIDs
+    ' Delete leftover "Question ID" textboxes on trivia slides and reset the scoreboards to 0
+    ResetGame
     
-    'Reset the scoreboard
-    ResetScoreboard
-    
-    'Create arrays to keep track of which questions and lottery events have already been shown this game
+    ' Create arrays to keep track of which questions and lottery events have already been shown this game
     CreateSlidesArrays
+    
+    ' Proceed to the next slide
+    SlideShowWindows(1).View.Next
     
 End Sub
 
@@ -45,27 +30,29 @@ Private Sub FindGameboardAndPointsSlides()
     Dim sld As Slide
     
     For Each sld In ActivePresentation.Slides
-        If sld.SlideID = 259 Then
-            gameboard = sld.slideIndex
-        ElseIf sld.SlideID = 260 Then
-            birdsOne = sld.slideIndex
-        ElseIf sld.SlideID = 262 Then
-            birdsTwo = sld.slideIndex
-        ElseIf sld.SlideID = 264 Then
-            birdsThree = sld.slideIndex
-        ElseIf sld.SlideID = 266 Then
-            pigsOne = sld.slideIndex
-        ElseIf sld.SlideID = 268 Then
-            pigsTwo = sld.slideIndex
-        ElseIf sld.SlideID = 270 Then
-            pigsThree = sld.slideIndex
-        ElseIf sld.SlideID = 272 Then
-            lottery = sld.slideIndex
+        If sld.SlideID >= 259 And sld.SlideID <= 272 Then
+            If sld.SlideID = 259 Then
+                gameboard = sld.slideIndex
+            ElseIf sld.SlideID = 260 Then
+                birdsOne = sld.slideIndex
+            ElseIf sld.SlideID = 262 Then
+                birdsTwo = sld.slideIndex
+            ElseIf sld.SlideID = 264 Then
+                birdsThree = sld.slideIndex
+            ElseIf sld.SlideID = 266 Then
+                pigsOne = sld.slideIndex
+            ElseIf sld.SlideID = 268 Then
+                pigsTwo = sld.slideIndex
+            ElseIf sld.SlideID = 270 Then
+                pigsThree = sld.slideIndex
+            ElseIf sld.SlideID = 272 Then
+                lottery = sld.slideIndex
+            End If
         End If
     Next sld
 End Sub
 
-Private Sub DeleteQuestionIDs()
+Private Sub ResetGame()
     Dim sld As Slide, shp As Shape
     
     For Each sld In ActivePresentation.Slides ' Loop through all slides
@@ -75,15 +62,14 @@ Private Sub DeleteQuestionIDs()
             End If
         Next shp
     Next sld
-End Sub
-
-Private Sub ResetScoreboard()
+    
+    ' Reset the scoreboards to 0
     ActivePresentation.Slides(gameboard).Shapes("Birds_Scoreboard").TextFrame.TextRange.Text = 0
     ActivePresentation.Slides(gameboard).Shapes("Pigs_Scoreboard").TextFrame.TextRange.Text = 0
 End Sub
 
 Private Sub CreateSlidesArrays()
-    Dim sld As Slide, secIndex As Long, secStart() As Long, secEnd() As Long
+    Dim sld As Slide, secIndex As Integer, secStart() As Integer, secEnd() As Integer
     ReDim secStart(1 To ActivePresentation.SectionProperties.Count)
     ReDim secEnd(1 To ActivePresentation.SectionProperties.Count)
 
@@ -97,7 +83,7 @@ Private Sub CreateSlidesArrays()
         End If
     Next sld
 
-    Dim i As Long
+    Dim i As Integer
 
     For i = 1 To ActivePresentation.SectionProperties.Count
         If ActivePresentation.SectionProperties.Name(i) = "Easy Questions" Then
@@ -117,37 +103,121 @@ Private Sub CreateSlidesArrays()
     
     ' Loop through each slide and store slide numbers for slides in Easy Questions, Medium Questions, and Hard Questions sections in slideNumbers
     ' and store the slide numbers for the slides in Lottery Events in lotteryNumbers
-    ReDim slideNumbers(1 To ActivePresentation.Slides.Count)
-    ReDim lotteryNumbers(1 To ActivePresentation.Slides.Count)
-    ReDim alreadyShownTrivia(1 To ActivePresentation.Slides.Count)
-    ReDim alreadyShownLottery(1 To ActivePresentation.Slides.Count)
+    ReDim alreadyShownSlides(1 To ActivePresentation.Slides.Count)
     Dim j As Integer
     For j = 1 To ActivePresentation.Slides.Count
-        If j >= easyBegin And j <= easyEnd Or j >= mediumBegin And j <= mediumEnd Or j >= hardBegin And j <= hardEnd Then
-            slideNumbers(j) = j
-            alreadyShownTrivia(j) = False
-        ElseIf j >= lotteryBegin And j <= lotteryEnd Then
-            lotteryNumbers(j) = j
-            alreadyShownTrivia(j) = False
+        If j >= easyBegin And j <= easyEnd Or j >= mediumBegin And j <= mediumEnd Or j >= hardBegin And j <= hardEnd Or j >= lotteryBegin And j <= lotteryEnd Then
+            alreadyShownSlides(j) = False
         End If
     Next j
 
 End Sub
 
-Sub ToLottery()
-    SlideShowWindows(1).View.GotoSlide (lottery)
+Sub Easy(clickedShp As Shape)
+    ' Record the name of the clicked shape so that it can be removed after returning to the gameboard
+    chosenShape = clickedShp.Name
+    
+    ChooseSlide easyBegin, easyEnd
 End Sub
 
-Sub ToEvent()
-    Dim chosenSlide As Integer, sld As Slide
+Sub Medium(clickedShp As Shape)
+    ' Declare variable and initialize the values of the first and final question for this difficulty
+    chosenShape = clickedShp.Name
+    
+    ChooseSlide mediumBegin, mediumEnd
+End Sub
+
+Sub Hard(clickedShp As Shape)
+    ' Declare variable and initialize the values of the first and final question for this difficulty
+    chosenShape = clickedShp.Name
+    
+    ChooseSlide hardBegin, hardEnd
+End Sub
+
+Sub EasyAndMedium(clickedShp As Shape)
+    ' Declare variable and initialize the values of the first and final question for this difficulty
+    chosenShape = clickedShp.Name
+    
+    ChooseSlide easyBegin, mediumEnd
+End Sub
+
+Sub MediumAndHard(clickedShp As Shape)
+    ' Declare variable and initialize the values of the first and final question for this difficulty
+    chosenShape = clickedShp.Name
+    
+    ChooseSlide mediumBegin, hardEnd
+End Sub
+
+Sub All(clickedShp As Shape)
+    ' Declare variable and initialize the values of the first and final question for this difficulty
+    chosenShape = clickedShp.Name
+    
+    ChooseSlide easyBegin, hardEnd
+End Sub
+
+Sub ToLottery(clickedShp As Shape)
+    Dim sld As Slide
+    
+    chosenShape = clickedShp.Name
+    
+    SlideShowWindows(1).View.GotoSlide (lottery)
+    
+    Set sld = SlideShowWindows(1).View.Slide
+    
+    For Each shp In sld.Shapes
+        If shp.Name = chosenLottery Then
+            shp.AnimationSettings.EntryEffect = ppEffectRandomBarsHorizontal
+            shp.AnimationSettings.AfterEffect = ppAfterEffectDim
+            Exit For
+        End If
+    Next shp
+End Sub
+
+Sub ToEvent(clickedShp As Shape)
+    sld As Slide
+    
+    chosenLottery = clickedShp.Name
     
     Do
         chosenSlide = RandBetween(lotteryBegin, lotteryEnd)
-    Loop While alreadyShownLottery(chosenSlide)
+    Loop While alreadyShownSlides(chosenSlide)
     
-    alreadyShownLottery(chosenSlide) = True
+    alreadyShownSlides(chosenSlide) = True
     
     SlideShowWindows(1).View.GotoSlide (chosenSlide)
+End Sub
+
+Private Sub ChooseSlide(lowestSlide As Integer, highestSlide As Integer)
+    Dim sld As Slide
+    
+    ' Pick a random slide until we find one that has not been shown yet
+    Do
+        chosenSlide = RandBetween(lowestSlide, highestSlide) ' Randomly choose a slide between the given values
+    Loop While alreadyShownSlides(chosenSlide) ' If this is logically true, then it will loop until false
+    
+    alreadyShownSlides(chosenSlide) = True ' Set this slide as chosen so that it doesn't appear again
+    
+    Set sld = ActivePresentation.Slides(chosenSlide)
+    
+    Dim sldWidth As Long
+    sldWidth = sld.Master.Width
+    Dim tbWidth As Long
+    tbWidth = 105
+    Dim tbLeft As Long
+    tbLeft = sldWidth - (tbWidth)
+    
+    SlideShowWindows(1).View.GotoSlide (chosenSlide)
+    
+    With sld.Shapes.AddTextbox(msoOrientationHorizontal, tbLeft, 0, 105, 124)
+        .Name = "QuestionID"
+        .TextFrame.TextRange.Text = clickedShp.Name
+        .TextFrame.TextRange.Font.Name = "Feast of Flesh BB"
+        .TextFrame.TextRange.Font.Size = 96
+        .TextFrame.TextRange.Font.Color.RGB = RGB(0, 0, 0)
+        .TextFrame.TextRange.Font.Bold = msoTrue
+        .TextFrame.TextRange.Font.Italic = msoTrue
+        .TextFrame.TextRange.Paragraphs.ParagraphFormat.Alignment = ppAlignCenter
+    End With
 End Sub
 
 Function RandBetween(vLow As Integer, vHigh As Integer)
@@ -155,208 +225,9 @@ Function RandBetween(vLow As Integer, vHigh As Integer)
     RandBetween = Int(vLow + (vHigh - vLow + 1) * Rnd())
 End Function
 
-Sub Easy(clickedShp As Shape)
-    'Declare variable and initialize the values of the first and final question for this difficulty
-    Dim chosenSlide As Integer, sld As Slide
-    
-    ' Pick a random slide until we find one that has not been shown yet
-    Do
-        chosenSlide = RandBetween(easyBegin, easyEnd) 'Randomly choose a slide between the given values
-    Loop While alreadyShownTrivia(chosenSlide) 'If this is logically true, then it will loop until false
-    
-    alreadyShownTrivia(chosenSlide) = True 'Set this slide as chosen so that it doesn't appear again
-    
-    Set sld = ActivePresentation.Slides(chosenSlide)
-    
-    Dim sldWidth As Integer
-    sldWidth = sld.Master.Width
-    Dim tbWidth As Integer
-    tbWidth = 105
-    Dim tbLeft As Integer
-    tbLeft = sldWidth - (tbWidth)
-    
-    chosenShape = clickedShp.Name
-    
-    SlideShowWindows(1).View.GotoSlide (chosenSlide)
-    With sld.Shapes.AddTextbox(msoOrientationHorizontal, tbLeft, 0, 105, 124)
-        .Name = "QuestionID"
-        .TextFrame.TextRange.Text = clickedShp.Name 'Copy the text from the clicked-on shape into the slide
-        .TextFrame.TextRange.Font.Name = "Feast of Flesh BB" 'Font name
-        .TextFrame.TextRange.Font.Size = 96 'Font size
-        .TextFrame.TextRange.Font.Color.RGB = RGB(0, 0, 0) 'Font color
-        .TextFrame.TextRange.Font.Bold = msoTrue
-        .TextFrame.TextRange.Font.Italic = msoTrue
-        .TextFrame.TextRange.Paragraphs.ParagraphFormat.Alignment = ppAlignCenter 'Align text in the center
-    End With
-End Sub
-
-Sub Medium(clickedShp As Shape)
-    'Declare variable and initialize the values of the first and final question for this difficulty
-    Dim chosenSlide As Integer, sld As Slide
-    
-    ' Pick a random slide until we find one that has not been shown yet
-    Do
-        chosenSlide = RandBetween(mediumBegin, mediumEnd) 'Randomly choose a slide between the given values
-    Loop While alreadyShownTrivia(chosenSlide) 'If this is logically true, then it will loop until false
-    
-    alreadyShownTrivia(chosenSlide) = True 'Set this slide as chosen so that it doesn't appear again
-    
-    Set sld = ActivePresentation.Slides(chosenSlide)
-    
-    Dim sldWidth As Integer
-    sldWidth = sld.Master.Width
-    Dim tbWidth As Integer
-    tbWidth = 105
-    Dim tbLeft As Integer
-    tbLeft = sldWidth - (tbWidth)
-    
-    SlideShowWindows(1).View.GotoSlide (chosenSlide)
-    With sld.Shapes.AddTextbox(msoOrientationHorizontal, tbLeft, 0, 105, 124)
-        .Name = "QuestionID"
-        .TextFrame.TextRange.Text = clickedShp.Name 'Copy the text from the clicked-on shape into the slide
-        .TextFrame.TextRange.Font.Name = "Feast of Flesh BB" 'Font name
-        .TextFrame.TextRange.Font.Size = 96 'Font size
-        .TextFrame.TextRange.Font.Color.RGB = RGB(0, 0, 0) 'Font color
-        .TextFrame.TextRange.Font.Bold = msoTrue
-        .TextFrame.TextRange.Font.Italic = msoTrue
-        .TextFrame.TextRange.Paragraphs.ParagraphFormat.Alignment = ppAlignCenter 'Align text in the center
-    End With
-End Sub
-
-Sub Hard(clickedShp As Shape)
-    'Declare variable and initialize the values of the first and final question for this difficulty
-    Dim chosenSlide As Integer, sld As Slide
-    
-    ' Pick a random slide until we find one that has not been shown yet
-    Do
-        chosenSlide = RandBetween(hardBegin, hardEnd) 'Randomly choose a slide between the given values
-    Loop While alreadyShownTrivia(chosenSlide) 'If this is logically true, then it will loop until false
-    
-    alreadyShownTrivia(chosenSlide) = True 'Set this slide as chosen so that it doesn't appear again
-    
-    Set sld = ActivePresentation.Slides(chosenSlide)
-    
-    Dim sldWidth As Integer
-    sldWidth = sld.Master.Width
-    Dim tbWidth As Integer
-    tbWidth = 105
-    Dim tbLeft As Integer
-    tbLeft = sldWidth - (tbWidth)
-    
-    SlideShowWindows(1).View.GotoSlide (chosenSlide)
-    With sld.Shapes.AddTextbox(msoOrientationHorizontal, tbLeft, 0, 105, 124)
-        .Name = "QuestionID"
-        .TextFrame.TextRange.Text = clickedShp.Name 'Copy the text from the clicked-on shape into the slide
-        .TextFrame.TextRange.Font.Name = "Feast of Flesh BB" 'Font name
-        .TextFrame.TextRange.Font.Size = 96 'Font size
-        .TextFrame.TextRange.Font.Color.RGB = RGB(0, 0, 0) 'Font color
-        .TextFrame.TextRange.Font.Bold = msoTrue
-        .TextFrame.TextRange.Font.Italic = msoTrue
-        .TextFrame.TextRange.Paragraphs.ParagraphFormat.Alignment = ppAlignCenter 'Align text in the center
-    End With
-End Sub
-
-Sub EasyAndMedium(clickedShp As Shape)
-    'Declare variable and initialize the values of the first and final question for this difficulty
-    Dim chosenSlide As Integer, sld As Slide
-    
-    ' Pick a random slide until we find one that has not been shown yet
-    Do
-        chosenSlide = RandBetween(easyBegin, mediumEnd) 'Randomly choose a slide between the given values
-    Loop While alreadyShownTrivia(chosenSlide) 'If this is logically true, then it will loop until false
-    
-    alreadyShownTrivia(chosenSlide) = True 'Set this slide as chosen so that it doesn't appear again
-    
-    Set sld = ActivePresentation.Slides(chosenSlide)
-    
-    Dim sldWidth As Integer
-    sldWidth = sld.Master.Width
-    Dim tbWidth As Integer
-    tbWidth = 105
-    Dim tbLeft As Integer
-    tbLeft = sldWidth - (tbWidth)
-    
-    SlideShowWindows(1).View.GotoSlide (chosenSlide)
-    With sld.Shapes.AddTextbox(msoOrientationHorizontal, tbLeft, 0, 105, 124)
-        .Name = "QuestionID"
-        .TextFrame.TextRange.Text = clickedShp.Name 'Copy the text from the clicked-on shape into the slide
-        .TextFrame.TextRange.Font.Name = "Feast of Flesh BB" 'Font name
-        .TextFrame.TextRange.Font.Size = 96 'Font size
-        .TextFrame.TextRange.Font.Color.RGB = RGB(0, 0, 0) 'Font color
-        .TextFrame.TextRange.Font.Bold = msoTrue
-        .TextFrame.TextRange.Font.Italic = msoTrue
-        .TextFrame.TextRange.Paragraphs.ParagraphFormat.Alignment = ppAlignCenter 'Align text in the center
-    End With
-End Sub
-
-Sub MediumAndHard(clickedShp As Shape)
-    'Declare variable and initialize the values of the first and final question for this difficulty
-    Dim chosenSlide As Integer, sld As Slide
-    
-    ' Pick a random slide until we find one that has not been shown yet
-    Do
-        chosenSlide = RandBetween(mediumBegin, hardEnd) 'Randomly choose a slide between the given values
-    Loop While alreadyShownTrivia(chosenSlide) 'If this is logically true, then it will loop until false
-    
-    alreadyShownTrivia(chosenSlide) = True 'Set this slide as chosen so that it doesn't appear again
-    
-    Set sld = ActivePresentation.Slides(chosenSlide)
-    
-    Dim sldWidth As Integer
-    sldWidth = sld.Master.Width
-    Dim tbWidth As Integer
-    tbWidth = 105
-    Dim tbLeft As Integer
-    tbLeft = sldWidth - (tbWidth)
-    
-    SlideShowWindows(1).View.GotoSlide (chosenSlide)
-    With sld.Shapes.AddTextbox(msoOrientationHorizontal, tbLeft, 0, 105, 124)
-        .Name = "QuestionID"
-        .TextFrame.TextRange.Text = clickedShp.Name 'Copy the text from the clicked-on shape into the slide
-        .TextFrame.TextRange.Font.Name = "Feast of Flesh BB" 'Font name
-        .TextFrame.TextRange.Font.Size = 96 'Font size
-        .TextFrame.TextRange.Font.Color.RGB = RGB(0, 0, 0) 'Font color
-        .TextFrame.TextRange.Font.Bold = msoTrue
-        .TextFrame.TextRange.Font.Italic = msoTrue
-        .TextFrame.TextRange.Paragraphs.ParagraphFormat.Alignment = ppAlignCenter 'Align text in the center
-    End With
-End Sub
-
-Sub All(clickedShp As Shape)
-    'Declare variable and initialize the values of the first and final question for this difficulty
-    Dim chosenSlide As Integer, sld As Slide
-    
-    ' Pick a random slide until we find one that has not been shown yet
-    Do
-        chosenSlide = RandBetween(easyBegin, hardEnd) 'Randomly choose a slide between the given values
-    Loop While alreadyShownTrivia(chosenSlide) 'If this is logically true, then it will loop until false
-    
-    alreadyShownTrivia(chosenSlide) = True 'Set this slide as chosen so that it doesn't appear again
-    
-    Set sld = ActivePresentation.Slides(chosenSlide)
-    
-    Dim sldWidth As Integer
-    sldWidth = sld.Master.Width
-    Dim tbWidth As Integer
-    tbWidth = 105
-    Dim tbLeft As Integer
-    tbLeft = sldWidth - (tbWidth)
-    
-    SlideShowWindows(1).View.GotoSlide (chosenSlide)
-    With sld.Shapes.AddTextbox(msoOrientationHorizontal, tbLeft, 0, 105, 124)
-        .Name = "QuestionID"
-        .TextFrame.TextRange.Text = clickedShp.Name 'Copy the text from the clicked-on shape into the slide
-        .TextFrame.TextRange.Font.Name = "Feast of Flesh BB" 'Font name
-        .TextFrame.TextRange.Font.Size = 96 'Font size
-        .TextFrame.TextRange.Font.Color.RGB = RGB(0, 0, 0) 'Font color
-        .TextFrame.TextRange.Font.Bold = msoTrue
-        .TextFrame.TextRange.Font.Italic = msoTrue
-        .TextFrame.TextRange.Paragraphs.ParagraphFormat.Alignment = ppAlignCenter 'Align text in the center
-    End With
-End Sub
-
 Sub ReturnToGameboard()
-    Dim shp As Shape, sld As Slide, currentSlide As Integer
+    Dim shp As Shape, sld As Slide
+    
     Set sld = SlideShowWindows(1).View.Slide
     For Each shp In sld.Shapes
         If shp.Name = "QuestionID" Then
@@ -366,7 +237,6 @@ Sub ReturnToGameboard()
     Next shp
     
     SlideShowWindows(1).View.GotoSlide (gameboard)
-
 End Sub
 
 Sub AwardPigs()
