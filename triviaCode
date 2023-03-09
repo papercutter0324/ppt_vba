@@ -38,7 +38,6 @@ Sub StartGame()
     
     ' Delete leftover "Question ID" textboxes on trivia slides and reset the scoreboards to 0
     Dim shp As Shape
-    
     For Each sld In ActivePresentation.Slides ' Loop through all slides
         For Each shp In sld.Shapes ' Loop through all shapes on the slide
             If shp.Name = "QuestionID" Then ' Check if shape name is "QuestionID"
@@ -86,7 +85,6 @@ Sub StartGame()
     
     ReDim alreadyShownSlides(1 To ActivePresentation.Slides.Count)
     Dim j As Integer
-    
     For j = 1 To ActivePresentation.Slides.Count
         If j >= easyBegin And j <= easyEnd Or j >= mediumBegin And j <= mediumEnd Or j >= hardBegin And j <= hardEnd Or j >= lotteryBegin And j <= lotteryEnd Then
             alreadyShownSlides(j) = False
@@ -98,56 +96,59 @@ Sub StartGame()
 End Sub
 
 Sub Easy(clickedShp As Shape)
-    
     level = "Easy"
     chosenShape = clickedShp.Name
-    
     ChooseSlide
 End Sub
 
 Sub Medium(clickedShp As Shape)
-    
     level = "Medium"
     chosenShape = clickedShp.Name
-    
     ChooseSlide
 End Sub
 
 Sub Hard(clickedShp As Shape)
-    
     level = "Hard"
     chosenShape = clickedShp.Name
-    
     ChooseSlide
 End Sub
 
 Sub EasyAndMedium(clickedShp As Shape)
-    
     level = "EasyAndMedium"
     chosenShape = clickedShp.Name
-    
     ChooseSlide
 End Sub
 
 Sub MediumAndHard(clickedShp As Shape)
-    
     level = "MediumAndHard"
     chosenShape = clickedShp.Name
-    
     ChooseSlide
 End Sub
 
 Sub All(clickedShp As Shape)
-    
     level = "All"
     chosenShape = clickedShp.Name
-    
     ChooseSlide
+End Sub
+
+Sub ReturnToGameboard()
+    Dim shp As Shape, sld As Slide
+    
+    Set sld = SlideShowWindows(1).View.Slide
+    For Each shp In sld.Shapes
+        If shp.Name = "QuestionID" Then
+            shp.Delete
+            Exit For
+        End If
+    Next shp
+    
+    SlideShowWindows(1).View.GotoSlide (gameboard)
+    
+    RemoveItem
 End Sub
 
 Sub ToLottery(clickedShp As Shape)
     chosenShape = clickedShp.Name
-
     SlideShowWindows(1).View.GotoSlide (lottery)
 End Sub
 
@@ -161,6 +162,39 @@ Sub ToEvent(clickedShp As Shape)
     alreadyShownSlides(chosenSlide) = True
     
     SlideShowWindows(1).View.GotoSlide (chosenSlide)
+End Sub
+
+Sub AwardPigs()
+    If ActivePresentation.SlideShowWindow.View.Slide.SlideNumber >= easyBegin And ActivePresentation.SlideShowWindow.View.Slide.SlideNumber <= easyEnd Then
+        ActivePresentation.SlideShowWindow.View.GotoSlide (pigsOne)
+    ElseIf ActivePresentation.SlideShowWindow.View.Slide.SlideNumber >= mediumBegin And ActivePresentation.SlideShowWindow.View.Slide.SlideNumber <= mediumEnd Then
+        ActivePresentation.SlideShowWindow.View.GotoSlide (pigsTwo)
+    ElseIf ActivePresentation.SlideShowWindow.View.Slide.SlideNumber >= hardBegin And ActivePresentation.SlideShowWindow.View.Slide.SlideNumber <= hardEnd Then
+        ActivePresentation.SlideShowWindow.View.GotoSlide (pigsThree)
+    End If
+End Sub
+
+Sub AwardBirds()
+    If ActivePresentation.SlideShowWindow.View.Slide.SlideNumber >= easyBegin And ActivePresentation.SlideShowWindow.View.Slide.SlideNumber <= easyEnd Then
+        ActivePresentation.SlideShowWindow.View.GotoSlide (birdsOne)
+    ElseIf ActivePresentation.SlideShowWindow.View.Slide.SlideNumber >= mediumBegin And ActivePresentation.SlideShowWindow.View.Slide.SlideNumber <= mediumEnd Then
+        ActivePresentation.SlideShowWindow.View.GotoSlide (birdsTwo)
+    ElseIf ActivePresentation.SlideShowWindow.View.Slide.SlideNumber >= hardBegin And ActivePresentation.SlideShowWindow.View.Slide.SlideNumber <= hardEnd Then
+        ActivePresentation.SlideShowWindow.View.GotoSlide (birdsThree)
+    End If
+End Sub
+
+Private Sub RemoveItem()
+    Dim sld As Slide
+    
+    Set sld = SlideShowWindows(1).View.Slide
+            
+    With sld.TimeLine.MainSequence.AddEffect(Shape:=sld.Shapes(chosenShape), _
+            EffectId:=msoAnimEffectRandomBars)
+        .Timing.Duration = 0.5
+        .Timing.TriggerType = msoAnimTriggerWithPrevious
+        .Exit = msoTrue
+    End With
 End Sub
 
 Private Sub ChooseSlide()
@@ -219,37 +253,3 @@ Function RandBetween(vLow As Integer, vHigh As Integer)
     Randomize
     RandBetween = Int(vLow + (vHigh - vLow + 1) * Rnd())
 End Function
-
-Sub ReturnToGameboard()
-    Dim shp As Shape, sld As Slide
-    
-    Set sld = SlideShowWindows(1).View.Slide
-    For Each shp In sld.Shapes
-        If shp.Name = "QuestionID" Then
-            shp.Delete
-            Exit For
-        End If
-    Next shp
-    
-    SlideShowWindows(1).View.GotoSlide (gameboard)
-End Sub
-
-Sub AwardPigs()
-    If ActivePresentation.SlideShowWindow.View.Slide.SlideNumber >= easyBegin And ActivePresentation.SlideShowWindow.View.Slide.SlideNumber <= easyEnd Then
-        ActivePresentation.SlideShowWindow.View.GotoSlide (pigsOne)
-    ElseIf ActivePresentation.SlideShowWindow.View.Slide.SlideNumber >= mediumBegin And ActivePresentation.SlideShowWindow.View.Slide.SlideNumber <= mediumEnd Then
-        ActivePresentation.SlideShowWindow.View.GotoSlide (pigsTwo)
-    ElseIf ActivePresentation.SlideShowWindow.View.Slide.SlideNumber >= hardBegin And ActivePresentation.SlideShowWindow.View.Slide.SlideNumber <= hardEnd Then
-        ActivePresentation.SlideShowWindow.View.GotoSlide (pigsThree)
-    End If
-End Sub
-
-Sub AwardBirds()
-    If ActivePresentation.SlideShowWindow.View.Slide.SlideNumber >= easyBegin And ActivePresentation.SlideShowWindow.View.Slide.SlideNumber <= easyEnd Then
-        ActivePresentation.SlideShowWindow.View.GotoSlide (birdsOne)
-    ElseIf ActivePresentation.SlideShowWindow.View.Slide.SlideNumber >= mediumBegin And ActivePresentation.SlideShowWindow.View.Slide.SlideNumber <= mediumEnd Then
-        ActivePresentation.SlideShowWindow.View.GotoSlide (birdsTwo)
-    ElseIf ActivePresentation.SlideShowWindow.View.Slide.SlideNumber >= hardBegin And ActivePresentation.SlideShowWindow.View.Slide.SlideNumber <= hardEnd Then
-        ActivePresentation.SlideShowWindow.View.GotoSlide (birdsThree)
-    End If
-End Sub
