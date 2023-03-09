@@ -229,24 +229,18 @@ Private Sub RemoveItem(shapeType As String)
         Set sld = ActivePresentation.Slides(lottery)
     End If
     
-    If sld.TimeLine.MainSequence.Count > 0 Then
-        ' Iterate through all the animation effects and delete them
-        Dim k As Long
-        For k = sld.TimeLine.MainSequence.Count To 1 Step -1
-            sld.TimeLine.MainSequence.Item(k).Delete
-        Next k
-    End If
-    
-    With sld.TimeLine.MainSequence.AddEffect(Shape:=sld.Shapes(shapeToRemove), _
+    ' Add the animation effect to the shape
+    Dim eff As Effect
+    Set eff = sld.TimeLine.MainSequence.AddEffect(Shape:=sld.Shapes(shapeToRemove), _
             EffectId:=msoAnimEffectRandomBars)
+    With eff
         .Timing.Duration = 0.5
         .Timing.TriggerType = msoAnimTriggerWithPrevious
         .Exit = msoTrue
+        Dim trg As T
     End With
-
-    sld.Shapes(shapeToRemove).Visible = msoFalse
-    
 End Sub
+
 
 Private Sub ChooseSlide()
     Dim sld As Slide, shp As Shape, lowestSlide As Integer, highestSlide As Integer
