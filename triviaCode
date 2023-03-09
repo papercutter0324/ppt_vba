@@ -36,6 +36,15 @@ Sub StartGame()
         End If
     Next sld
     
+    ' Remove any leftover animations from the gameboard
+    If ActivePresentation.Slides(gameboard).TimeLine.MainSequence.Count > 0 Then
+        ' Iterate through all the animation effects and delete them
+        Dim k As Long
+        For k = ActivePresentation.Slides(gameboard).TimeLine.MainSequence.Count To 1 Step -1
+            ActivePresentation.Slides(gameboard).TimeLine.MainSequence.Item(k).Delete
+        Next k
+    End If
+    
     ' Delete leftover "Question ID" textboxes on trivia slides and reset the scoreboards to 0
     Dim shp As Shape
     For Each sld In ActivePresentation.Slides ' Loop through all slides
@@ -131,6 +140,25 @@ Sub All(clickedShp As Shape)
     ChooseSlide
 End Sub
 
+Sub ToLottery(clickedShp As Shape)
+    chosenShape = clickedShp.Name
+    SlideShowWindows(1).View.GotoSlide (lottery)
+    
+    RemoveItem "lotteryShape"
+End Sub
+
+Sub ToEvent(clickedShp As Shape)
+    chosenLottery = clickedShp.Name
+    
+    Do
+        chosenSlide = RandBetween(lotteryBegin, lotteryEnd)
+    Loop While alreadyShownSlides(chosenSlide)
+    
+    alreadyShownSlides(chosenSlide) = True
+    
+    SlideShowWindows(1).View.GotoSlide (chosenSlide)
+End Sub
+
 Sub ReturnToGameboard()
     Dim shp As Shape, sld As Slide
     
@@ -144,24 +172,7 @@ Sub ReturnToGameboard()
     
     SlideShowWindows(1).View.GotoSlide (gameboard)
     
-    RemoveItem
-End Sub
-
-Sub ToLottery(clickedShp As Shape)
-    chosenShape = clickedShp.Name
-    SlideShowWindows(1).View.GotoSlide (lottery)
-End Sub
-
-Sub ToEvent(clickedShp As Shape)
-    chosenLottery = clickedShp.Name
-    
-    Do
-        chosenSlide = RandBetween(lotteryBegin, lotteryEnd)
-    Loop While alreadyShownSlides(chosenSlide)
-    
-    alreadyShownSlides(chosenSlide) = True
-    
-    SlideShowWindows(1).View.GotoSlide (chosenSlide)
+    RemoveItem "triviaShape"
 End Sub
 
 Sub AwardPigs()
@@ -184,12 +195,26 @@ Sub AwardBirds()
     End If
 End Sub
 
-Private Sub RemoveItem()
-    Dim sld As Slide
+Private Sub RemoveItem(shapeType As String)
+    Dim sld As Slide, shapeToRemove As String
+                
+    If shapeType = "triviaShape" Then
+        shapeToRemove = chosenShape
+        Set sld = ActivePresentation.Slides(gameboard)
+    ElseIf shapeType = "lotteryShape" Then
+        shapeToRemove = chosenLottery
+        Set sld = ActivePresentation.Slides(lottery)
+    End If
     
-    Set sld = SlideShowWindows(1).View.Slide
-            
-    With sld.TimeLine.MainSequence.AddEffect(Shape:=sld.Shapes(chosenShape), _
+    If ActivePresentation.Slides(gameboard).TimeLine.MainSequence.Count > 0 Then
+        ' Iterate through all the animation effects and delete them
+        Dim k As Long
+        For k = ActivePresentation.Slides(gameboard).TimeLine.MainSequence.Count To 1 Step -1
+            ActivePresentation.Slides(gameboard).TimeLine.MainSequence.Item(k).Delete
+        Next k
+    End If
+    
+    With sld.TimeLine.MainSequence.AddEffect(Shape:=sld.Shapes(shapeToRemove), _
             EffectId:=msoAnimEffectRandomBars)
         .Timing.Duration = 0.5
         .Timing.TriggerType = msoAnimTriggerWithPrevious
