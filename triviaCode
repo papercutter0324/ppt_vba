@@ -7,28 +7,13 @@ Dim birdsOne As Integer, birdsTwo As Integer, birdsThree As Integer, pigsOne As 
 ' Variables to store the slide numbers of key slides
 Dim gameboard As Integer, lottery As Integer
 ' Variables to handle transitions and animations
-Dim chosenSlide As Integer, chosenShape As String, chosenLottery As String
+Dim chosenSlide As Integer, chosenShape As String, chosenLottery As String, level As String
 
 Dim alreadyShownSlides() As Boolean
 
 Sub StartGame()
-    ' Set the current slide numbers for the gameboard and points slides
-    FindGameboardAndPointsSlides
-    
-    ' Delete leftover "Question ID" textboxes on trivia slides and reset the scoreboards to 0
-    ResetGame
-    
-    ' Create arrays to keep track of which questions and lottery events have already been shown this game
-    CreateSlidesArrays
-    
-    ' Proceed to the next slide
-    SlideShowWindows(1).View.Next
-    
-End Sub
-
-Private Sub FindGameboardAndPointsSlides()
     Dim sld As Slide
-    
+    ' Set the current slide numbers for the gameboard and points slides
     For Each sld In ActivePresentation.Slides
         If sld.SlideID >= 259 And sld.SlideID <= 272 Then
             If sld.SlideID = 259 Then
@@ -50,10 +35,9 @@ Private Sub FindGameboardAndPointsSlides()
             End If
         End If
     Next sld
-End Sub
-
-Private Sub ResetGame()
-    Dim sld As Slide, shp As Shape
+    
+    ' Delete leftover "Question ID" textboxes on trivia slides and reset the scoreboards to 0
+    Dim shp As Shape
     
     For Each sld In ActivePresentation.Slides ' Loop through all slides
         For Each shp In sld.Shapes ' Loop through all shapes on the slide
@@ -66,10 +50,9 @@ Private Sub ResetGame()
     ' Reset the scoreboards to 0
     ActivePresentation.Slides(gameboard).Shapes("Birds_Scoreboard").TextFrame.TextRange.Text = 0
     ActivePresentation.Slides(gameboard).Shapes("Pigs_Scoreboard").TextFrame.TextRange.Text = 0
-End Sub
-
-Private Sub CreateSlidesArrays()
-    Dim sld As Slide, secIndex As Integer, secStart() As Integer, secEnd() As Integer
+    
+    ' Create arrays to keep track of which questions and lottery events have already been shown this game
+    Dim secIndex As Integer, secStart() As Integer, secEnd() As Integer
     ReDim secStart(1 To ActivePresentation.SectionProperties.Count)
     ReDim secEnd(1 To ActivePresentation.SectionProperties.Count)
 
@@ -101,81 +84,74 @@ Private Sub CreateSlidesArrays()
         End If
     Next i
     
-    ' Loop through each slide and store slide numbers for slides in Easy Questions, Medium Questions, and Hard Questions sections in slideNumbers
-    ' and store the slide numbers for the slides in Lottery Events in lotteryNumbers
     ReDim alreadyShownSlides(1 To ActivePresentation.Slides.Count)
     Dim j As Integer
+    
     For j = 1 To ActivePresentation.Slides.Count
         If j >= easyBegin And j <= easyEnd Or j >= mediumBegin And j <= mediumEnd Or j >= hardBegin And j <= hardEnd Or j >= lotteryBegin And j <= lotteryEnd Then
             alreadyShownSlides(j) = False
         End If
     Next j
-
+    
+    ' Proceed to the next slide
+    SlideShowWindows(1).View.Next
 End Sub
 
 Sub Easy(clickedShp As Shape)
-    ' Record the name of the clicked shape so that it can be removed after returning to the gameboard
+    
+    level = "Easy"
     chosenShape = clickedShp.Name
     
-    ChooseSlide easyBegin, easyEnd
+    ChooseSlide
 End Sub
 
 Sub Medium(clickedShp As Shape)
-    ' Declare variable and initialize the values of the first and final question for this difficulty
+    
+    level = "Medium"
     chosenShape = clickedShp.Name
     
-    ChooseSlide mediumBegin, mediumEnd
+    ChooseSlide
 End Sub
 
 Sub Hard(clickedShp As Shape)
-    ' Declare variable and initialize the values of the first and final question for this difficulty
+    
+    level = "Hard"
     chosenShape = clickedShp.Name
     
-    ChooseSlide hardBegin, hardEnd
+    ChooseSlide
 End Sub
 
 Sub EasyAndMedium(clickedShp As Shape)
-    ' Declare variable and initialize the values of the first and final question for this difficulty
+    
+    level = "EasyAndMedium"
     chosenShape = clickedShp.Name
     
-    ChooseSlide easyBegin, mediumEnd
+    ChooseSlide
 End Sub
 
 Sub MediumAndHard(clickedShp As Shape)
-    ' Declare variable and initialize the values of the first and final question for this difficulty
+    
+    level = "MediumAndHard"
     chosenShape = clickedShp.Name
     
-    ChooseSlide mediumBegin, hardEnd
+    ChooseSlide
 End Sub
 
 Sub All(clickedShp As Shape)
-    ' Declare variable and initialize the values of the first and final question for this difficulty
+    
+    level = "All"
     chosenShape = clickedShp.Name
     
-    ChooseSlide easyBegin, hardEnd
+    ChooseSlide
 End Sub
 
 Sub ToLottery(clickedShp As Shape)
-    Dim sld As Slide
-    
     chosenShape = clickedShp.Name
-    
+
     SlideShowWindows(1).View.GotoSlide (lottery)
-    
-    Set sld = SlideShowWindows(1).View.Slide
-    
-    For Each shp In sld.Shapes
-        If shp.Name = chosenLottery Then
-            shp.AnimationSettings.EntryEffect = ppEffectRandomBarsHorizontal
-            shp.AnimationSettings.AfterEffect = ppAfterEffectDim
-            Exit For
-        End If
-    Next shp
 End Sub
 
 Sub ToEvent(clickedShp As Shape)
-    sld As Slide
-    
     chosenLottery = clickedShp.Name
     
     Do
@@ -187,9 +163,29 @@ Sub ToEvent(clickedShp As Shape)
     SlideShowWindows(1).View.GotoSlide (chosenSlide)
 End Sub
 
-Private Sub ChooseSlide(lowestSlide As Integer, highestSlide As Integer)
-    Dim sld As Slide
+Private Sub ChooseSlide()
+    Dim sld As Slide, lowestSlide As Integer, highestSlide As Integer
     
+    If level = "All" Then
+        lowestSlide = easyBegin
+        highestSlide = hardEnd
+    ElseIf level = "Easy" Then
+        lowestSlide = easyBegin
+        highestSlide = easyEnd
+    ElseIf level = "Medium" Then
+        lowestSlide = mediumBegin
+        highestSlide = mediumEnd
+    ElseIf level = "High" Then
+        lowestSlide = hardBegin
+        highestSlide = hardEnd
+    ElseIf level = "EasyAndMedium" Then
+        lowestSlide = easyBegin
+        highestSlide = mediumEnd
+    ElseIf level = "MediumAndHard" Then
+        lowestSlide = mediumBegin
+        highestSlide = hardEnd
+    End If
+        
     ' Pick a random slide until we find one that has not been shown yet
     Do
         chosenSlide = RandBetween(lowestSlide, highestSlide) ' Randomly choose a slide between the given values
@@ -199,18 +195,17 @@ Private Sub ChooseSlide(lowestSlide As Integer, highestSlide As Integer)
     
     Set sld = ActivePresentation.Slides(chosenSlide)
     
-    Dim sldWidth As Long
+    Dim sldWidth As Long, tbHeight As Long, tbWidth As Long, tbLeft As Long
     sldWidth = sld.Master.Width
-    Dim tbWidth As Long
+    tbHeight = 124
     tbWidth = 105
-    Dim tbLeft As Long
     tbLeft = sldWidth - (tbWidth)
     
     SlideShowWindows(1).View.GotoSlide (chosenSlide)
     
-    With sld.Shapes.AddTextbox(msoOrientationHorizontal, tbLeft, 0, 105, 124)
+    With sld.Shapes.AddTextbox(msoOrientationHorizontal, tbLeft, 0, tbWidth, tbHeight)
         .Name = "QuestionID"
-        .TextFrame.TextRange.Text = clickedShp.Name
+        .TextFrame.TextRange.Text = chosenShape
         .TextFrame.TextRange.Font.Name = "Feast of Flesh BB"
         .TextFrame.TextRange.Font.Size = 96
         .TextFrame.TextRange.Font.Color.RGB = RGB(0, 0, 0)
