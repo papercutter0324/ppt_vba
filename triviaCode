@@ -7,12 +7,15 @@ Dim birdsOne As Integer, birdsTwo As Integer, birdsThree As Integer, pigsOne As 
 ' Variables to store the slide numbers of key slides
 Dim gameboard As Integer, lottery As Integer
 ' Variables to handle transitions and animations
-Dim chosenSlide As Integer, chosenShape As String, chosenLottery As String, level As String
+Dim chosenSlide As Integer, chosenShape As String, chosenLottery As String, level As String, shapeToRemove As String
 
 Dim alreadyShownSlides() As Boolean
 
 Sub StartGame()
-    Dim sld As Slide
+    Dim sld As Slide, shp As Shape
+    ' Initialize chosenLottery to a default value to compare against a firstRun If-statement
+    chosenLottery = "firstRun"
+    
     ' Set the current slide numbers for the gameboard and points slides
     For Each sld In ActivePresentation.Slides
         If sld.SlideID >= 259 And sld.SlideID <= 272 Then
@@ -36,7 +39,7 @@ Sub StartGame()
         End If
     Next sld
     
-    ' Remove any leftover animations from the gameboard
+    ' Remove any leftover animations from the gameboard and lottery slides
     If ActivePresentation.Slides(gameboard).TimeLine.MainSequence.Count > 0 Then
         ' Iterate through all the animation effects and delete them
         Dim k As Long
@@ -45,12 +48,29 @@ Sub StartGame()
         Next k
     End If
     
+    If ActivePresentation.Slides(lottery).TimeLine.MainSequence.Count > 0 Then
+        ' Iterate through all the animation effects and delete them
+        Dim l As Long
+        For l = ActivePresentation.Slides(lottery).TimeLine.MainSequence.Count To 1 Step -1
+            ActivePresentation.Slides(lottery).TimeLine.MainSequence.Item(l).Delete
+        Next l
+    End If
+    
+    'Make all shapes on the gameboard slide visible
+    For Each shp In ActivePresentation.Slides(gameboard).Shapes
+        shp.Visible = msoTrue
+    Next shp
+    
+    'Make all shapes on the lottery slide visible
+    For Each shp In ActivePresentation.Slides(lottery).Shapes
+        shp.Visible = msoTrue
+    Next shp
+    
     ' Delete leftover "Question ID" textboxes on trivia slides and reset the scoreboards to 0
-    Dim shp As Shape
     For Each sld In ActivePresentation.Slides ' Loop through all slides
         For Each shp In sld.Shapes ' Loop through all shapes on the slide
-            If shp.Name = "QuestionID" Then ' Check if shape name is "QuestionID"
-                shp.Delete ' Delete the shape
+            If shp.Name = "QuestionID" Then ' Check if Shape name is "QuestionID"
+                shp.Delete ' Delete the Shape
             End If
         Next shp
     Next sld
@@ -144,10 +164,13 @@ Sub ToLottery(clickedShp As Shape)
     chosenShape = clickedShp.Name
     SlideShowWindows(1).View.GotoSlide (lottery)
     
-    RemoveItem "lotteryShape"
+    If chosenLottery <> "firstRun" Then
+        RemoveItem "lotteryShape"
+    End If
 End Sub
 
 Sub ToEvent(clickedShp As Shape)
+   
     chosenLottery = clickedShp.Name
     
     Do
@@ -196,7 +219,7 @@ Sub AwardBirds()
 End Sub
 
 Private Sub RemoveItem(shapeType As String)
-    Dim sld As Slide, shapeToRemove As String
+    Dim sld As Slide
                 
     If shapeType = "triviaShape" Then
         shapeToRemove = chosenShape
@@ -206,11 +229,11 @@ Private Sub RemoveItem(shapeType As String)
         Set sld = ActivePresentation.Slides(lottery)
     End If
     
-    If ActivePresentation.Slides(gameboard).TimeLine.MainSequence.Count > 0 Then
+    If sld.TimeLine.MainSequence.Count > 0 Then
         ' Iterate through all the animation effects and delete them
         Dim k As Long
-        For k = ActivePresentation.Slides(gameboard).TimeLine.MainSequence.Count To 1 Step -1
-            ActivePresentation.Slides(gameboard).TimeLine.MainSequence.Item(k).Delete
+        For k = sld.TimeLine.MainSequence.Count To 1 Step -1
+            sld.TimeLine.MainSequence.Item(k).Delete
         Next k
     End If
     
@@ -220,10 +243,13 @@ Private Sub RemoveItem(shapeType As String)
         .Timing.TriggerType = msoAnimTriggerWithPrevious
         .Exit = msoTrue
     End With
+
+    sld.Shapes(shapeToRemove).Visible = msoFalse
+    
 End Sub
 
 Private Sub ChooseSlide()
-    Dim sld As Slide, lowestSlide As Integer, highestSlide As Integer
+    Dim sld As Slide, shp As Shape, lowestSlide As Integer, highestSlide As Integer
     
     If level = "All" Then
         lowestSlide = easyBegin
