@@ -229,15 +229,11 @@ Private Sub RemoveItem(shapeType As String)
         Set sld = ActivePresentation.Slides(lottery)
     End If
     
-    ' Add the animation effect to the shape
-    Dim eff As Effect
-    Set eff = sld.TimeLine.MainSequence.AddEffect(Shape:=sld.Shapes(shapeToRemove), _
+    With sld.TimeLine.MainSequence.AddEffect(Shape:=sld.Shapes(chosenShape), _
             EffectId:=msoAnimEffectRandomBars)
-    With eff
         .Timing.Duration = 0.5
         .Timing.TriggerType = msoAnimTriggerWithPrevious
         .Exit = msoTrue
-        Dim trg As T
     End With
 End Sub
 
