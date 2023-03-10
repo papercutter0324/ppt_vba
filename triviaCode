@@ -7,7 +7,7 @@ Dim birdsOne As Integer, birdsTwo As Integer, birdsThree As Integer, pigsOne As 
 ' Variables to store the slide numbers of key slides
 Dim gameboard As Integer, lottery As Integer
 ' Variables to handle transitions and animations
-Dim chosenSlide As Integer, chosenShape As String, chosenLottery As String, level As String, shapeToRemove As String
+Dim chosenSlide As Integer, chosenShape As String, chosenLottery As String, level As String
 
 Dim alreadyShownSlides() As Boolean
 
@@ -15,6 +15,7 @@ Sub StartGame()
     Dim sld As Slide, shp As Shape
     ' Initialize chosenLottery to a default value to compare against a firstRun If-statement
     chosenLottery = "firstRun"
+    chosenShape = "firstRun"
     
     ' Set the current slide numbers for the gameboard and points slides
     For Each sld In ActivePresentation.Slides
@@ -126,53 +127,108 @@ End Sub
 
 Sub Easy(clickedShp As Shape)
     level = "Easy"
+    
+    ' If this isn't the first choice, permanently hide the PREVIOUS choice
+    If chosenShape <> "firstRun" Then
+        ActivePresentation.Slides(gameboard).Shapes(chosenShape).Visible = msoFalse
+    End If
+        
+    ' Set the NEW choice as the chosenShp
     chosenShape = clickedShp.Name
+    
     ChooseSlide
 End Sub
 
 Sub Medium(clickedShp As Shape)
     level = "Medium"
+    
+    ' If this isn't the first choice, permanently hide the PREVIOUS choice
+    If chosenShape <> "firstRun" Then
+        ActivePresentation.Slides(gameboard).Shapes(chosenShape).Visible = msoFalse
+    End If
+        
+    ' Set the NEW choice as the chosenShp
     chosenShape = clickedShp.Name
+    
     ChooseSlide
 End Sub
 
 Sub Hard(clickedShp As Shape)
     level = "Hard"
+    
+    ' If this isn't the first choice, permanently hide the PREVIOUS choice
+    If chosenShape <> "firstRun" Then
+        ActivePresentation.Slides(gameboard).Shapes(chosenShape).Visible = msoFalse
+    End If
+        
+    ' Set the NEW choice as the chosenShp
     chosenShape = clickedShp.Name
+    
     ChooseSlide
 End Sub
 
 Sub EasyAndMedium(clickedShp As Shape)
     level = "EasyAndMedium"
+    
+    ' If this isn't the first choice, permanently hide the PREVIOUS choice
+    If chosenShape <> "firstRun" Then
+        ActivePresentation.Slides(gameboard).Shapes(chosenShape).Visible = msoFalse
+    End If
+        
+    ' Set the NEW choice as the chosenShp
     chosenShape = clickedShp.Name
+    
     ChooseSlide
 End Sub
 
 Sub MediumAndHard(clickedShp As Shape)
     level = "MediumAndHard"
+    
+    ' If this isn't the first choice, permanently hide the PREVIOUS choice
+    If chosenShape <> "firstRun" Then
+        ActivePresentation.Slides(gameboard).Shapes(chosenShape).Visible = msoFalse
+    End If
+        
+    ' Set the NEW choice as the chosenShp
     chosenShape = clickedShp.Name
+    
     ChooseSlide
 End Sub
 
 Sub All(clickedShp As Shape)
     level = "All"
+    
+    ' If this isn't the first choice, permanently hide the PREVIOUS choice
+    If chosenShape <> "firstRun" Then
+        ActivePresentation.Slides(gameboard).Shapes(chosenShape).Visible = msoFalse
+    End If
+        
+    ' Set the NEW choice as the chosenShp
     chosenShape = clickedShp.Name
+    
     ChooseSlide
 End Sub
 
 Sub ToLottery(clickedShp As Shape)
-    chosenShape = clickedShp.Name
+        
     SlideShowWindows(1).View.GotoSlide (lottery)
     
+    ' If this isn't the first choice, permanently hide the PREVIOUS choice
+    If chosenShape <> "firstRun" Then
+        ActivePresentation.Slides(gameboard).Shapes(chosenShape).Visible = msoFalse
+    End If
+        
+    ' Set the NEW choice as the chosenShp
+    chosenShape = clickedShp.Name
+        
+    ' If this isn't the first time seeing the lottery, hide the PREVIOUS choice
     If chosenLottery <> "firstRun" Then
         RemoveItem "lotteryShape"
     End If
 End Sub
 
 Sub ToEvent(clickedShp As Shape)
-   
-    chosenLottery = clickedShp.Name
-    
+        
     Do
         chosenSlide = RandBetween(lotteryBegin, lotteryEnd)
     Loop While alreadyShownSlides(chosenSlide)
@@ -180,11 +236,21 @@ Sub ToEvent(clickedShp As Shape)
     alreadyShownSlides(chosenSlide) = True
     
     SlideShowWindows(1).View.GotoSlide (chosenSlide)
+        
+    ' If an exit animation was reccently seen on the lottery slide, permanently hide that choice
+    If chosenLottery <> "firstRun" Then
+        ActivePresentation.Slides(lottery).Shapes(chosenLottery).Visible = msoFalse
+    End If
+    
+    ' Set a NEW chosenLottery value
+    chosenLottery = clickedShp.Name
 End Sub
 
 Sub ReturnToGameboard()
     Dim shp As Shape, sld As Slide
     
+    ' Delete any created QuestionID textboxes
+    ' For efficiency, this could instead be changed to solely target the trivia slide that was just seen
     Set sld = SlideShowWindows(1).View.Slide
     For Each shp In sld.Shapes
         If shp.Name = "QuestionID" Then
@@ -198,23 +264,25 @@ Sub ReturnToGameboard()
     RemoveItem "triviaShape"
 End Sub
 
-Sub AwardPigs()
-    If ActivePresentation.SlideShowWindow.View.Slide.SlideNumber >= easyBegin And ActivePresentation.SlideShowWindow.View.Slide.SlideNumber <= easyEnd Then
-        ActivePresentation.SlideShowWindow.View.GotoSlide (pigsOne)
-    ElseIf ActivePresentation.SlideShowWindow.View.Slide.SlideNumber >= mediumBegin And ActivePresentation.SlideShowWindow.View.Slide.SlideNumber <= mediumEnd Then
-        ActivePresentation.SlideShowWindow.View.GotoSlide (pigsTwo)
-    ElseIf ActivePresentation.SlideShowWindow.View.Slide.SlideNumber >= hardBegin And ActivePresentation.SlideShowWindow.View.Slide.SlideNumber <= hardEnd Then
-        ActivePresentation.SlideShowWindow.View.GotoSlide (pigsThree)
-    End If
-End Sub
-
-Sub AwardBirds()
-    If ActivePresentation.SlideShowWindow.View.Slide.SlideNumber >= easyBegin And ActivePresentation.SlideShowWindow.View.Slide.SlideNumber <= easyEnd Then
-        ActivePresentation.SlideShowWindow.View.GotoSlide (birdsOne)
-    ElseIf ActivePresentation.SlideShowWindow.View.Slide.SlideNumber >= mediumBegin And ActivePresentation.SlideShowWindow.View.Slide.SlideNumber <= mediumEnd Then
-        ActivePresentation.SlideShowWindow.View.GotoSlide (birdsTwo)
-    ElseIf ActivePresentation.SlideShowWindow.View.Slide.SlideNumber >= hardBegin And ActivePresentation.SlideShowWindow.View.Slide.SlideNumber <= hardEnd Then
-        ActivePresentation.SlideShowWindow.View.GotoSlide (birdsThree)
+Sub AwardEggs(winningTeam As Shape)
+    Dim sld As Slide
+    Set sld = ActivePresentation.SlideShowWindow.View
+    If winningTeam.Name = "King Piggie (Awared Points)" Then
+        If sld.Slide.SlideNumber >= easyBegin And sld.SlideNumber <= easyEnd Then
+            sld.GotoSlide (pigsOne)
+        ElseIf sld.Slide.SlideNumber >= mediumBegin And sld.Slide.SlideNumber <= mediumEnd Then
+            sld.GotoSlide (pigsTwo)
+        ElseIf sld.Slide.SlideNumber >= hardBegin And sld.Slide.SlideNumber <= hardEnd Then
+            sld.GotoSlide (pigsThree)
+        End If
+    ElseIf winningTeam = "Angry Red (Award Points)" Then
+        If sld.Slide.SlideNumber >= easyBegin And sld.SlideNumber <= easyEnd Then
+            sld.GotoSlide (birdsOne)
+        ElseIf sld.Slide.SlideNumber >= mediumBegin And sld.Slide.SlideNumber <= mediumEnd Then
+            sld.GotoSlide (birdsTwo)
+        ElseIf sld.Slide.SlideNumber >= hardBegin And sld.Slide.SlideNumber <= hardEnd Then
+            sld.GotoSlide (birdsThree)
+        End If
     End If
 End Sub
 
@@ -223,23 +291,30 @@ Private Sub RemoveItem(shapeType As String)
                 
     If shapeType = "triviaShape" Then
         shapeToRemove = chosenShape
+        triviaToHide = False
         Set sld = ActivePresentation.Slides(gameboard)
     ElseIf shapeType = "lotteryShape" Then
         shapeToRemove = chosenLottery
+        lotteryToHide = False
         Set sld = ActivePresentation.Slides(lottery)
     End If
     
-    With sld.TimeLine.MainSequence.AddEffect(Shape:=sld.Shapes(chosenShape), _
-            EffectId:=msoAnimEffectRandomBars)
+    With sld.TimeLine.MainSequence.AddEffect(Shape:=sld.Shapes(chosenShape), EffectId:=msoAnimEffectRandomBars)
         .Timing.Duration = 0.5
         .Timing.TriggerType = msoAnimTriggerWithPrevious
         .Exit = msoTrue
     End With
+    
+    shapeToHide = True
 End Sub
-
 
 Private Sub ChooseSlide()
     Dim sld As Slide, shp As Shape, lowestSlide As Integer, highestSlide As Integer
+    
+    ' If an exit animation was reccently seen on the lottery slide, permanently hide that choice
+    If chosenLottery <> "firstRun" Then
+        ActivePresentation.Slides(lottery).Shapes(chosenLottery).Visible = msoFalse
+    End If
     
     If level = "All" Then
         lowestSlide = easyBegin
@@ -268,8 +343,6 @@ Private Sub ChooseSlide()
     
     alreadyShownSlides(chosenSlide) = True ' Set this slide as chosen so that it doesn't appear again
     
-    Set sld = ActivePresentation.Slides(chosenSlide)
-    
     Dim sldWidth As Long, tbHeight As Long, tbWidth As Long, tbLeft As Long
     sldWidth = sld.Master.Width
     tbHeight = 124
@@ -277,6 +350,8 @@ Private Sub ChooseSlide()
     tbLeft = sldWidth - (tbWidth)
     
     SlideShowWindows(1).View.GotoSlide (chosenSlide)
+    
+    Set sld = ActivePresentation.Slides(chosenSlide)
     
     With sld.Shapes.AddTextbox(msoOrientationHorizontal, tbLeft, 0, tbWidth, tbHeight)
         .Name = "QuestionID"
