@@ -1,4 +1,3 @@
-' This is the correct code, ChatGPT
 Option Explicit
 
 ' Variables to store the slide numbers of the first and last slides of each section
@@ -7,16 +6,18 @@ Dim easyBegin As Integer, easyEnd As Integer, mediumBegin As Integer, mediumEnd 
 Dim birdsOne As Integer, birdsTwo As Integer, birdsThree As Integer, pigsOne As Integer, pigsTwo As Integer, pigsThree As Integer
 ' Variables to store the slide numbers of key slides
 Dim gameboard As Integer, lottery As Integer
-' Variables to handle transitions and animations
-Dim chosenSlide As Integer, chosenShape As String, chosenLottery As String, level As String
+' Variables to handle transitions and animation logic
+Dim chosenSlide As Integer, level As String, chosenTrivia As String, chosenLottery As String
+Dim triviaToHide As String, lotteryToHide As String, hideTrivia As Boolean, hideLottery As Boolean
 
 Dim alreadyShownSlides() As Boolean
 
 Sub StartGame()
     Dim sld As Slide, shp As Shape
-    ' Initialize chosenLottery to a default value to compare against a firstRun If-statement
-    chosenLottery = "firstRun"
-    chosenShape = "firstRun"
+    ' Initialize key variables that need to specific value before the first time a sub assigns them a new value
+    lotteryToHide = "firstRun"
+    hideTrivia = False
+    hideLottery = False
     
     ' Set the current slide numbers for the gameboard and points slides
     For Each sld In ActivePresentation.Slides
@@ -128,194 +129,49 @@ End Sub
 
 Sub Easy(clickedShp As Shape)
     level = "Easy"
-    
-    ' If this isn't the first choice, permanently hide the PREVIOUS choice
-    If chosenShape <> "firstRun" Then
-        ActivePresentation.Slides(gameboard).Shapes(chosenShape).Visible = msoFalse
-    End If
-        
-    ' Set the NEW choice as the chosenShp
-    chosenShape = clickedShp.Name
+    chosenTrivia = clickedShp.Name
     
     ChooseSlide
 End Sub
 
 Sub Medium(clickedShp As Shape)
     level = "Medium"
-    
-    ' If this isn't the first choice, permanently hide the PREVIOUS choice
-    If chosenShape <> "firstRun" Then
-        ActivePresentation.Slides(gameboard).Shapes(chosenShape).Visible = msoFalse
-    End If
-        
-    ' Set the NEW choice as the chosenShp
-    chosenShape = clickedShp.Name
+    chosenTrivia = clickedShp.Name
     
     ChooseSlide
 End Sub
 
 Sub Hard(clickedShp As Shape)
     level = "Hard"
-    
-    ' If this isn't the first choice, permanently hide the PREVIOUS choice
-    If chosenShape <> "firstRun" Then
-        ActivePresentation.Slides(gameboard).Shapes(chosenShape).Visible = msoFalse
-    End If
-        
-    ' Set the NEW choice as the chosenShp
-    chosenShape = clickedShp.Name
+   
+    chosenTrivia = clickedShp.Name
     
     ChooseSlide
 End Sub
 
 Sub EasyAndMedium(clickedShp As Shape)
     level = "EasyAndMedium"
-    
-    ' If this isn't the first choice, permanently hide the PREVIOUS choice
-    If chosenShape <> "firstRun" Then
-        ActivePresentation.Slides(gameboard).Shapes(chosenShape).Visible = msoFalse
-    End If
-        
-    ' Set the NEW choice as the chosenShp
-    chosenShape = clickedShp.Name
+    chosenTrivia = clickedShp.Name
     
     ChooseSlide
 End Sub
 
 Sub MediumAndHard(clickedShp As Shape)
     level = "MediumAndHard"
-    
-    ' If this isn't the first choice, permanently hide the PREVIOUS choice
-    If chosenShape <> "firstRun" Then
-        ActivePresentation.Slides(gameboard).Shapes(chosenShape).Visible = msoFalse
-    End If
-        
-    ' Set the NEW choice as the chosenShp
-    chosenShape = clickedShp.Name
+    chosenTrivia = clickedShp.Name
     
     ChooseSlide
 End Sub
 
 Sub All(clickedShp As Shape)
     level = "All"
-    
-    ' If this isn't the first choice, permanently hide the PREVIOUS choice
-    If chosenShape <> "firstRun" Then
-        ActivePresentation.Slides(gameboard).Shapes(chosenShape).Visible = msoFalse
-    End If
-        
-    ' Set the NEW choice as the chosenShp
-    chosenShape = clickedShp.Name
+    chosenTrivia = clickedShp.Name
     
     ChooseSlide
 End Sub
 
-Sub ToLottery(clickedShp As Shape)
-        
-    SlideShowWindows(1).View.GotoSlide (lottery)
-    
-    ' If this isn't the first choice, permanently hide the PREVIOUS choice
-    If chosenShape <> "firstRun" Then
-        ActivePresentation.Slides(gameboard).Shapes(chosenShape).Visible = msoFalse
-    End If
-        
-    ' Set the NEW choice as the chosenShp
-    chosenShape = clickedShp.Name
-        
-    ' If this isn't the first time seeing the lottery, hide the PREVIOUS choice
-    If chosenLottery <> "firstRun" Then
-        RemoveItem "lotteryShape"
-    End If
-End Sub
-
-Sub ToEvent(clickedShp As Shape)
-        
-    Do
-        chosenSlide = RandBetween(lotteryBegin, lotteryEnd)
-    Loop While alreadyShownSlides(chosenSlide)
-    
-    alreadyShownSlides(chosenSlide) = True
-    
-    SlideShowWindows(1).View.GotoSlide (chosenSlide)
-        
-    ' If an exit animation was reccently seen on the lottery slide, permanently hide that choice
-    If chosenLottery <> "firstRun" Then
-        ActivePresentation.Slides(lottery).Shapes(chosenLottery).Visible = msoFalse
-    End If
-    
-    ' Set a NEW chosenLottery value
-    chosenLottery = clickedShp.Name
-End Sub
-
-Sub ReturnToGameboard()
-    Dim shp As Shape, sld As Slide
-    
-    ' Delete any created QuestionID textboxes
-    ' For efficiency, this could instead be changed to solely target the trivia slide that was just seen
-    Set sld = SlideShowWindows(1).View.Slide
-    For Each shp In sld.Shapes
-        If shp.Name = "QuestionID" Then
-            shp.Delete
-            Exit For
-        End If
-    Next shp
-    
-    SlideShowWindows(1).View.GotoSlide (gameboard)
-    
-    RemoveItem "triviaShape"
-End Sub
-
-Sub AwardEggs(winningTeam As Shape)
-    Dim sld As Slide
-    Set sld = ActivePresentation.SlideShowWindow.View
-    If winningTeam.Name = "King Piggie (Awared Points)" Then
-        If sld.Slide.SlideNumber >= easyBegin And sld.SlideNumber <= easyEnd Then
-            sld.GotoSlide (pigsOne)
-        ElseIf sld.Slide.SlideNumber >= mediumBegin And sld.Slide.SlideNumber <= mediumEnd Then
-            sld.GotoSlide (pigsTwo)
-        ElseIf sld.Slide.SlideNumber >= hardBegin And sld.Slide.SlideNumber <= hardEnd Then
-            sld.GotoSlide (pigsThree)
-        End If
-    ElseIf winningTeam = "Angry Red (Award Points)" Then
-        If sld.Slide.SlideNumber >= easyBegin And sld.SlideNumber <= easyEnd Then
-            sld.GotoSlide (birdsOne)
-        ElseIf sld.Slide.SlideNumber >= mediumBegin And sld.Slide.SlideNumber <= mediumEnd Then
-            sld.GotoSlide (birdsTwo)
-        ElseIf sld.Slide.SlideNumber >= hardBegin And sld.Slide.SlideNumber <= hardEnd Then
-            sld.GotoSlide (birdsThree)
-        End If
-    End If
-End Sub
-
-Private Sub RemoveItem(shapeType As String)
-    Dim sld As Slide
-                
-    If shapeType = "triviaShape" Then
-        shapeToRemove = chosenShape
-        triviaToHide = False
-        Set sld = ActivePresentation.Slides(gameboard)
-    ElseIf shapeType = "lotteryShape" Then
-        shapeToRemove = chosenLottery
-        lotteryToHide = False
-        Set sld = ActivePresentation.Slides(lottery)
-    End If
-    
-    With sld.TimeLine.MainSequence.AddEffect(Shape:=sld.Shapes(chosenShape), EffectId:=msoAnimEffectRandomBars)
-        .Timing.Duration = 0.5
-        .Timing.TriggerType = msoAnimTriggerWithPrevious
-        .Exit = msoTrue
-    End With
-    
-    shapeToHide = True
-End Sub
-
 Private Sub ChooseSlide()
     Dim sld As Slide, shp As Shape, lowestSlide As Integer, highestSlide As Integer
-    
-    ' If an exit animation was reccently seen on the lottery slide, permanently hide that choice
-    If chosenLottery <> "firstRun" Then
-        ActivePresentation.Slides(lottery).Shapes(chosenLottery).Visible = msoFalse
-    End If
     
     If level = "All" Then
         lowestSlide = easyBegin
@@ -356,7 +212,7 @@ Private Sub ChooseSlide()
     
     With sld.Shapes.AddTextbox(msoOrientationHorizontal, tbLeft, 0, tbWidth, tbHeight)
         .Name = "QuestionID"
-        .TextFrame.TextRange.Text = chosenShape
+        .TextFrame.TextRange.Text = chosenTrivia
         .TextFrame.TextRange.Font.Name = "Feast of Flesh BB"
         .TextFrame.TextRange.Font.Size = 96
         .TextFrame.TextRange.Font.Color.RGB = RGB(0, 0, 0)
@@ -364,6 +220,113 @@ Private Sub ChooseSlide()
         .TextFrame.TextRange.Font.Italic = msoTrue
         .TextFrame.TextRange.Paragraphs.ParagraphFormat.Alignment = ppAlignCenter
     End With
+    
+    If hideLottery = True Or hideTrivia = True Then
+        MakeShapeNotVisible
+    End If
+End Sub
+
+Sub AwardEggs(winningTeam As Shape)
+    Dim sld As Slide
+    Set sld = ActivePresentation.SlideShowWindow.View
+    If winningTeam.Name = "King Piggie (Awared Points)" Then
+        If sld.Slide.SlideNumber >= easyBegin And sld.SlideNumber <= easyEnd Then
+            sld.GotoSlide (pigsOne)
+        ElseIf sld.Slide.SlideNumber >= mediumBegin And sld.Slide.SlideNumber <= mediumEnd Then
+            sld.GotoSlide (pigsTwo)
+        ElseIf sld.Slide.SlideNumber >= hardBegin And sld.Slide.SlideNumber <= hardEnd Then
+            sld.GotoSlide (pigsThree)
+        End If
+    ElseIf winningTeam = "Angry Red (Award Points)" Then
+        If sld.Slide.SlideNumber >= easyBegin And sld.SlideNumber <= easyEnd Then
+            sld.GotoSlide (birdsOne)
+        ElseIf sld.Slide.SlideNumber >= mediumBegin And sld.Slide.SlideNumber <= mediumEnd Then
+            sld.GotoSlide (birdsTwo)
+        ElseIf sld.Slide.SlideNumber >= hardBegin And sld.Slide.SlideNumber <= hardEnd Then
+            sld.GotoSlide (birdsThree)
+        End If
+    End If
+End Sub
+
+Sub ToLottery(clickedShp As Shape)
+        
+    chosenTrivia = clickedShp.Name
+    
+    SlideShowWindows(1).View.GotoSlide (lottery)
+        
+    ' If this isn't the first time seeing the lottery, hide the PREVIOUS choice
+    If chosenLottery <> "firstRun" Then
+        ShapeToExit "lotteryShape"
+    End If
+End Sub
+
+Sub ToEvent(clickedShp As Shape)
+        
+    chosenLottery = clickedShp.Name
+    
+    Do
+        chosenSlide = RandBetween(lotteryBegin, lotteryEnd)
+    Loop While alreadyShownSlides(chosenSlide)
+    
+    alreadyShownSlides(chosenSlide) = True
+    
+    SlideShowWindows(1).View.GotoSlide (chosenSlide)
+        
+    If hideLottery = True Or hideTrivia = True Then
+        MakeShapeNotVisible
+    End If
+    
+End Sub
+
+Sub ReturnToGameboard()
+    Dim shp As Shape, sld As Slide
+    
+    ' Delete any created QuestionID textboxes
+    ' For efficiency, this could instead be changed to solely target the trivia slide that was just seen
+    Set sld = SlideShowWindows(1).View.Slide
+    For Each shp In sld.Shapes
+        If shp.Name = "QuestionID" Then
+            shp.Delete
+            Exit For
+        End If
+    Next shp
+    
+    SlideShowWindows(1).View.GotoSlide (gameboard)
+    
+    ShapeToExit "triviaShape"
+End Sub
+
+Private Sub ShapeToExit(shapeType As String)
+    Dim sld As Slide, shapeToRemove As String
+                
+    If shapeType = "triviaShape" Then
+        shapeToRemove = chosenTrivia
+        triviaToHide = chosenTrivia
+        hideTrivia = True
+        Set sld = ActivePresentation.Slides(gameboard)
+    ElseIf shapeType = "lotteryShape" Then
+        shapeToRemove = chosenLottery
+        lotteryToHide = chosenLottery
+        hideLottery = True
+        Set sld = ActivePresentation.Slides(lottery)
+    End If
+    
+    With sld.TimeLine.MainSequence.AddEffect(Shape:=sld.Shapes(shapeToRemove), EffectId:=msoAnimEffectRandomBars)
+        .Timing.Duration = 0.5
+        .Timing.TriggerType = msoAnimTriggerWithPrevious
+        .Exit = msoTrue
+    End With
+End Sub
+
+Private Sub MakeShapeNotVisible()
+    If hideTrivia = True Then
+        ActivePresentation.Slides(gameboard).Shapes(triviaToHide).Visible = msoFalse
+        hideTivia = False
+    End If
+    If hideLottery = True Then
+        ActivePresentation.Slides(gameboard).Shapes(lotteryToHide).Visible = msoFalse
+        hideLottery = False
+    End If
 End Sub
 
 Function RandBetween(vLow As Integer, vHigh As Integer)
